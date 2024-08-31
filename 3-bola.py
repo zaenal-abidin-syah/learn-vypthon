@@ -1,0 +1,93 @@
+from vpython import *
+import random
+wallThickness = .1
+widthRoom = 15
+heightRoom = 10
+depthRoom = 6
+
+mRadius = .75
+floor = box(color=color.white, pos=vector(0, -heightRoom/2, 0), size=vector(widthRoom, wallThickness, depthRoom))
+ceiling = box(color=color.white, pos=vector(0, heightRoom/2, 0), size=vector(widthRoom, wallThickness, depthRoom))
+backWall = box(color=color.white, pos=vector(0, 0, -depthRoom/2), size=vector(widthRoom, heightRoom, wallThickness))
+leftWall = box(color=color.white, pos=vector(-widthRoom/2, 0, 0), size=vector(wallThickness, heightRoom, depthRoom))
+rightWall = box(color=color.white, pos=vector(widthRoom/2, 0, 0), size=vector(wallThickness, heightRoom, depthRoom))
+
+# Buat jendela VPython
+# scene = canvas(title='Five Randomly Moving Balls', width=800, height=600, center=vector(0,0,0))
+
+# Fungsi untuk menghasilkan warna acak
+def warna():
+    return [color.green, color.blue, color.yellow, color.purple, color.magenta]
+
+# Fungsi untuk menghasilkan kecepatan acak di sumbu x dan y
+def random_velocity():
+    return vector(random.uniform(-1, 1), random.uniform(-1, 1), 0)
+
+# Buat bola-bola
+balls = []
+for i in range(3):
+    ball = sphere(pos=vector(random.uniform(-5, 5), random.uniform(-5, 5), 0),
+                  radius=mRadius,
+                  color=warna()[i])
+    ball.velocity = random_velocity()
+    balls.append(ball)
+
+# Menandai bola hijau
+green_ball = balls[0]
+green_ball.color = vector(0, 1, 0)  # Bola hijau
+
+# Loop untuk menggerakkan bola
+dt = 0.01
+while True:
+    rate(500)  # Tentukan kecepatan animasi
+    
+    # Cek apakah semua bola selain bola hijau sudah berhenti
+    all_others_stopped = all(mag(ball.velocity) == 0 for ball in balls if ball != green_ball)
+    
+    for ball in balls:
+        if ball == green_ball:
+            if all_others_stopped:
+                ball.velocity = vector(0, 0, 0)  # Hentikan bola hijau
+            ball.pos += ball.velocity * dt
+            
+            # Memantul dari dinding di antara sumbu x dan y
+            if abs(ball.pos.x) >= 5:
+                ball.velocity.x *= -1
+            if abs(ball.pos.y) >= 5:
+                ball.velocity.y *= -1
+            
+            
+            # Tetap di sumbu x dan y
+            ball.pos.z = 0
+        else:
+            for i in balls:
+                if i != ball:
+                  if mag(ball.pos - i.pos) <= (ball.radius + i.radius):
+                      # ball.velocity = vector(0, 0, 0)
+                      if i == green_ball:
+                        i.velocity.x = random.uniform(-1, 1); 
+                        i.velocity.y = random.uniform(-1, 1);
+                      else:
+                        ball.velocity.x *= -1
+                        ball.velocity.y *= -1
+                        i.velocity.x *= -1
+                        i.velocity.y *= -1
+                  
+
+            # Deteksi tabrakan dengan bola hijau
+            if mag(ball.pos - green_ball.pos) <= (ball.radius + green_ball.radius):
+              # pass
+                ball.velocity = vector(0, 0, 0)  # Bola lainnya berhenti
+            else:
+                ball.pos += ball.velocity * dt
+
+                # Memantul dari dinding
+                if abs(ball.pos.x) >= 5:
+                    ball.velocity.x *= -1
+                if abs(ball.pos.y) >= 5:
+                    ball.velocity.y *= -1
+                ball.pos.z = 0  # Tetap di sumbu x dan y
+
+
+                # 3 bola, bola hijau digerakan dengan keyboard kalau kena stop bola lainnya
+                # 5 bola, bola hijau jika kena bola hijau  mantul
